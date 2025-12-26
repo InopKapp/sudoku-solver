@@ -1,6 +1,19 @@
-venv/           
-__pycache__/    
-*.pyc           
-.env            
-*.sqlite3      
-.idea/ .vscode/
+# ---------- Python ----------
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ---------- React / Node ----------
+node_modules/
+dist/
+.vite/
+
+# ---------- Environment ----------
+.env
+.env.local
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
