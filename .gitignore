@@ -17,3 +17,12 @@ dist/
 # ---------- OS ----------
 .DS_Store
 Thumbs.db
+.vscode/
+
+# Debug / generated outputs
+debug/
+
+# Images (inputs + OCR intermediates)
+*.png
+*.jpg
+*.jpeg
