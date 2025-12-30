@@ -5,9 +5,13 @@ function App() {
     Array(9).fill(0)
   );
 
-  const [solved, setSolved] = useState(false);
-  const [board, setBoard] = useState(emptyGrid);
-  const [initialBoard, setInitialBoard] = useState(emptyGrid);
+  const [initialGrid, setInitialGrid] = useState(emptyGrid)
+  const [grid, setGrid] = useState(
+    Array.from({ length: 9 }, () => Array(9).fill(0))
+  )
+
+  const [invalidCells, setInvalidCells] = useState([])
+  const [solvedGrid, setSolvedGrid] = useState(null)
 
   const samplePuzzle = [
     [5,3,0,0,7,0,0,0,0],
@@ -22,34 +26,122 @@ function App() {
   ];
 
   async function solveSudoku() {
-    const response = await fetch("http://127.0.0.1:8000/solve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ board })
-    });
+    try {
+      const res = await fetch("http://127.0.0.1:8000/solve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ board: grid })
+      })
 
-    const data = await response.json();
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.detail || "Cannot solve invalid Sudoku")
+        return
+      }
 
-    if (data.solved) {
-      setBoard(data.board);
-      setSolved(true);
+      const data = await res.json()
+
+      if (data.solved) {
+        setSolvedGrid(data.board)
+      } else {
+        alert("No solution exists for this Sudoku")
+      }
+    } catch (err) {
+      console.error("Solve failed", err)
     }
-
   }
 
+  async function validateGrid(updatedGrid) {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ board: updatedGrid })
+      })
+
+      const data = await res.json()
+      setInvalidCells(data.invalid_cells)
+    } catch (err) {
+      console.error("Validation failed", err)
+    }
+  }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append("image", file)
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/ocr", {
+        method: "POST",
+        body: formData
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.detail || "OCR failed")
+        return
+      }
+
+      const data = await res.json()
+
+      setGrid(data.board)
+      setSolvedGrid(null)
+      setInvalidCells([])
+      validateGrid(data.board)
+
+      alert(
+        "Please verify the detected Sudoku grid.\n" +
+        "You may correct any incorrect cells before solving."
+      )
+
+    } catch (err) {
+      console.error("OCR error", err)
+      alert("Failed to read Sudoku from image")
+    }
+  }
+
+  function handleChange(r, c, value) {
+    if (isGiven(r, c)) return 
+    const newGrid = grid.map(row => [...row])
+    newGrid[r][c] = value
+    setGrid(newGrid)
+    setSolvedGrid(null)
+    validateGrid(newGrid)
+  }
+
+  function isInvalid(r, c) {
+    return invalidCells.some(
+      ([row, col]) => row === r && col === c
+    )
+  }
+
+  function isGridValid() {
+    return invalidCells.length === 0
+  }
+
+  function isGiven(r, c) {
+    return initialGrid[r][c] !== 0
+  }
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Sudoku Solver</h1>
 
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+      />
+
       <table>
         <tbody>
-          {board.map((row, r) => (
+          {grid.map((row, r) => (
             <tr key={r}>
               {row.map((cell, c) => {
-                const isOriginal = initialBoard[r][c] !== 0;
-                const isSolvedCell =
-                  solved && initialBoard[r][c] === 0 && board[r][c] !== 0;
+                const displayValue = solvedGrid ? solvedGrid[r][c] : grid[r][c]
 
                 return (
                   <td key={c}>
@@ -57,23 +149,12 @@ function App() {
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
-                      value={cell === 0 ? "" : cell}
-                      disabled={isSolvedCell}
+                      value={displayValue === 0 ? "" : displayValue}
+                      disabled={isGiven(r, c) || solvedGrid !== null}
                       onChange={(e) => {
-                        const v = e.target.value;
-
+                        const v = e.target.value
                         if (v === "" || /^[1-9]$/.test(v)) {
-                          const value = v === "" ? 0 : Number(v);
-
-                          const newBoard = board.map(row => [...row]);
-                          const newInitial = initialBoard.map(row => [...row]);
-
-                          newBoard[r][c] = value;
-                          newInitial[r][c] = value;
-
-                          setBoard(newBoard);
-                          setInitialBoard(newInitial);
-                          setSolved(false);
+                          handleChange(r, c, v === "" ? 0 : Number(v))
                         }
                       }}
                       style={{
@@ -81,20 +162,20 @@ function App() {
                         height: "42px",
                         textAlign: "center",
                         fontSize: "20px",
-                        fontWeight: isOriginal ? "bold" : "normal",
-                        color: "#ffffff",
-                        caretColor: "#ffffff",
-                        backgroundColor: isOriginal ? "#7c3aed" : "#1f1f1f",
-                        borderTop:
-                          r % 3 === 0 ? "3px solid #f5f5f5" : "1px solid #888",
-                        borderLeft:
-                          c % 3 === 0 ? "3px solid #f5f5f5" : "1px solid #888",
-                        borderRight:
-                          c === 8 ? "3px solid #f5f5f5" : "1px solid #888",
-                        borderBottom:
-                          r === 8 ? "3px solid #f5f5f5" : "1px solid #888",
+                        fontWeight: isGiven(r, c) ? "bold" : "normal",
+                        color: "#000000",
+                        caretColor: "#000000",
+                        backgroundColor: isInvalid(r, c)
+                          ? "#fecaca"            
+                          : isGiven(r, c)
+                          ? "#e9d5ff"            
+                          : "#ffffff",           
+                        borderTop: r % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
+                        borderLeft: c % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
+                        borderRight: c === 8 ? "3px solid #444" : "1px solid #aaa",
+                        borderBottom: r === 8 ? "3px solid #444" : "1px solid #aaa",
                         outline: "none",
-                        boxSizing: "border-box"
+                        boxSizing: "border-box",
                       }}
                     />
                   </td>
@@ -106,16 +187,26 @@ function App() {
       </table>
 
       <div style={{ marginTop: "20px" }}>
-        <button onClick={solveSudoku} style={{ marginRight: "10px" }}>
-          Solve
+        <button
+          onClick={solveSudoku}
+          disabled={!isGridValid()}
+          style={{
+            marginTop: "20px",
+            padding: "10px 16px",
+            fontSize: "16px",
+            cursor: isGridValid() ? "pointer" : "not-allowed",
+            opacity: isGridValid() ? 1 : 0.5
+          }}
+        >
+          Solve Sudoku
         </button>
-
         <button
           onClick={() => {
-            const sample = samplePuzzle.map(row => [...row]);
-            setBoard(sample);
-            setInitialBoard(sample);
-            setSolved(false);
+            const preset = samplePuzzle.map(row => [...row])
+            setInitialGrid(preset)
+            setGrid(preset)
+            setSolvedGrid(null)
+            validateGrid(preset)
           }}
         >
           Load Sample Puzzle

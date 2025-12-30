@@ -3,6 +3,40 @@ import copy
 
 N = 9
 
+def find_invalid_cells(board):
+    invalid = set()
+
+    def check_unit(cells):
+        seen = {}
+        for r, c in cells:
+            val = board[r][c]
+            if val == 0:
+                continue
+            if val in seen:
+                invalid.add((r, c))
+                invalid.add(seen[val])
+            else:
+                seen[val] = (r, c)
+
+    # rows
+    for r in range(9):
+        check_unit([(r, c) for c in range(9)])
+
+    # columns
+    for c in range(9):
+        check_unit([(r, c) for r in range(9)])
+
+    # 3x3 boxes
+    for br in range(0, 9, 3):
+        for bc in range(0, 9, 3):
+            check_unit([
+                (r, c)
+                for r in range(br, br + 3)
+                for c in range(bc, bc + 3)
+            ])
+
+    return [[r, c] for r, c in invalid]
+
 def is_valid(board: List[List[int]], row: int, col: int, num: int) -> bool:
     for x in range(N):
         if board[row][x] == num or board[x][col] == num:
@@ -32,7 +66,6 @@ def is_board_valid(board: List[List[int]]) -> bool:
         for j in range(N):
             num = board[i][j]
             if num != 0:
-                # temporarily remove and check
                 board[i][j] = 0
                 if not is_valid(board, i, j, num):
                     board[i][j] = num
