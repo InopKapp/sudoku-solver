@@ -12,6 +12,7 @@ function App() {
 
   const [invalidCells, setInvalidCells] = useState([])
   const [solvedGrid, setSolvedGrid] = useState(null)
+  const [showOcrNotice, setShowOcrNotice] = useState(false)
 
   const samplePuzzle = [
     [5,3,0,0,7,0,0,0,0],
@@ -89,13 +90,9 @@ function App() {
 
       setGrid(data.board)
       setSolvedGrid(null)
+      setShowOcrNotice(true)
       setInvalidCells([])
       validateGrid(data.board)
-
-      alert(
-        "Please verify the detected Sudoku grid.\n" +
-        "You may correct any incorrect cells before solving."
-      )
 
     } catch (err) {
       console.error("OCR error", err)
@@ -109,6 +106,7 @@ function App() {
     newGrid[r][c] = value
     setGrid(newGrid)
     setSolvedGrid(null)
+    setShowOcrNotice(false)
     validateGrid(newGrid)
   }
 
@@ -185,7 +183,14 @@ function App() {
           ))}
         </tbody>
       </table>
-
+      <div
+        style={{
+          visibility: showOcrNotice ? "visible":"hidden"
+        }}
+      >
+        Verify the detected sudoku grid<br />
+        Correct any incorrect cells before proceeding.
+      </div>
       <div style={{ marginTop: "20px" }}>
         <button
           onClick={solveSudoku}
