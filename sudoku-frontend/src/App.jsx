@@ -26,9 +26,11 @@ function App() {
     [0,0,0,0,8,0,0,7,9]
   ];
 
+  const API_BASE = "https://sudoku-solver-backend-w5wk.onrender.com"
+
   async function solveSudoku() {
     try {
-      const res = await fetch("http://127.0.0.1:8000/solve", {
+      const res = await fetch($(API_BASE)/solve, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ board: grid })
@@ -54,7 +56,7 @@ function App() {
 
   async function validateGrid(updatedGrid) {
     try {
-      const res = await fetch("http://127.0.0.1:8000/validate", {
+      const res = await fetch($(API_BASE)/validate, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ board: updatedGrid })
@@ -75,7 +77,7 @@ function App() {
     formData.append("image", file)
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/ocr", {
+      const res = await fetch($(API_BASE)/ocr, {
         method: "POST",
         body: formData
       })
