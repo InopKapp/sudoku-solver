@@ -29,7 +29,10 @@ app = FastAPI(title="Sudoku Solver API", version="0.1")
 # CORS - allow all for development (change in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://sudoku-solver-frontend-hx4k.onrender.com"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
