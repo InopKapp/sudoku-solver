@@ -30,7 +30,7 @@ function App() {
 
   async function solveSudoku() {
     try {
-      const res = await fetch($(API_BASE)/solve, {
+      const res = await fetch(`$(API_BASE)/solve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ board: grid })
@@ -56,7 +56,7 @@ function App() {
 
   async function validateGrid(updatedGrid) {
     try {
-      const res = await fetch($(API_BASE)/validate, {
+      const res = await fetch(`$(API_BASE)/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ board: updatedGrid })
@@ -77,7 +77,7 @@ function App() {
     formData.append("image", file)
 
     try {
-      const res = await fetch($(API_BASE)/ocr, {
+      const res = await fetch(`$(API_BASE)/ocr`, {
         method: "POST",
         body: formData
       })
