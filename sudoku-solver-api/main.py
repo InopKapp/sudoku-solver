@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import Optional, List, Annotated
@@ -7,8 +9,6 @@ from ocr.pipeline import run_ocr_pipeline
 import shutil
 import os
 import uuid
-
-# strong validation: each row is exactly 9 ints between 0 and 9
 
 Row = Annotated[list[int], Field(min_length=9, max_length=9)]
 Grid = Annotated[list[Row], Field(min_length=9, max_length=9)]
@@ -26,10 +26,11 @@ class ValidationResult(BaseModel):
 
 app = FastAPI(title="Sudoku Solver API", version="0.1")
 
-# CORS - allow all for development (change in production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "https://sudoku-solver-frontend-hx4k.onrender.com"
     ],
     allow_credentials=True,
@@ -63,8 +64,10 @@ async def validate(puzzle: Puzzle):
         "invalid_cells": invalid
     }
 
+ocr_debug = os.getenv("OCR_DEBUG", "false").lower() == "true"
+
 @app.post("/ocr")
-async def ocr_sudoku(image: UploadFile = File(...), debug: bool = True):
+async def ocr_sudoku(image: UploadFile = File(...)):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type")
 
@@ -78,7 +81,7 @@ async def ocr_sudoku(image: UploadFile = File(...), debug: bool = True):
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
-        board = run_ocr_pipeline(temp_path, debug=debug)
+        board = run_ocr_pipeline(temp_path, debug=ocr_debug)
 
         return {
             "board": board

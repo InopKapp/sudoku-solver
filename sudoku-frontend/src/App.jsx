@@ -13,6 +13,7 @@ function App() {
   const [invalidCells, setInvalidCells] = useState([])
   const [solvedGrid, setSolvedGrid] = useState(null)
   const [showOcrNotice, setShowOcrNotice] = useState(false)
+  const [isOcrLoading, setIsOcrLoading] = useState(false)
 
   const samplePuzzle = [
     [5,3,0,0,7,0,0,0,0],
@@ -26,7 +27,7 @@ function App() {
     [0,0,0,0,8,0,0,7,9]
   ];
 
-  const API_BASE = "https://sudoku-solver-backend-w5wk.onrender.com"
+  const API_BASE = import.meta.env.VITE_API_BASE
 
   async function solveSudoku() {
     try {
@@ -70,6 +71,9 @@ function App() {
   }
 
   async function handleImageUpload(e) {
+    setIsOcrLoading(true)
+    setShowOcrNotice(false)
+
     const file = e.target.files[0]
     if (!file) return
 
@@ -95,6 +99,9 @@ function App() {
       setShowOcrNotice(true)
       setInvalidCells([])
       validateGrid(data.board)
+      setSourceGrid(
+        data.board.map(row => row.map(v => v !== 0))
+      )
 
     } catch (err) {
       console.error("OCR error", err)
@@ -187,11 +194,24 @@ function App() {
       </table>
       <div
         style={{
-          visibility: showOcrNotice ? "visible":"hidden"
+          minHeight: "40px",
+          marginBottom: "10px",
+          textAlign: "center",
+          transition: "opacity 0.2s ease",
         }}
       >
-        Verify the detected sudoku grid<br />
-        Correct any incorrect cells before proceeding.
+        {isOcrLoading && (
+          <p style={{ color: "#7c3aed", fontWeight: 500, margin: 0 }}>
+            Processing image… please wait
+          </p>
+        )}
+
+        {!isOcrLoading && showOcrNotice && (
+          <p style={{ margin: 0, lineHeight: "1.4" }}>
+            Verify the detected Sudoku grid.<br />
+            Correct any incorrect cells before proceeding.
+          </p>
+        )}
       </div>
       <div style={{ marginTop: "20px" }}>
         <button
