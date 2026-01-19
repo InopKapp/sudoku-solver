@@ -5,7 +5,16 @@ function App() {
     Array(9).fill(0)
   );
 
-  const [initialGrid, setInitialGrid] = useState(emptyGrid)
+  const emptyBoolGrid = Array.from({ length: 9 }, () =>
+    Array(9).fill(false)
+  )
+
+  const [givenGrid, setGivenGrid] = useState(
+    Array.from({ length: 9 }, () => Array(9).fill(false))
+  )
+
+  const [filledBeforeSolve, setFilledBeforeSolve] = useState(emptyBoolGrid)
+
   const [grid, setGrid] = useState(
     Array.from({ length: 9 }, () => Array(9).fill(0))
   )
@@ -30,6 +39,12 @@ function App() {
   const API_BASE = import.meta.env.VITE_API_BASE
 
   async function solveSudoku() {
+    setFilledBeforeSolve(
+      grid.map(row => row.map(v => v !== 0))
+    )
+
+    setShowOcrNotice(false)
+
     try {
       const res = await fetch(`${API_BASE}/solve`, {
         method: "POST",
@@ -71,11 +86,11 @@ function App() {
   }
 
   async function handleImageUpload(e) {
-    setIsOcrLoading(true)
-    setShowOcrNotice(false)
-
     const file = e.target.files[0]
     if (!file) return
+
+    setIsOcrLoading(true)
+    setShowOcrNotice(false)
 
     const formData = new FormData()
     formData.append("image", file)
@@ -88,26 +103,27 @@ function App() {
 
       if (!res.ok) {
         const err = await res.json()
-        alert(err.detail || "OCR failed")
-        return
+        throw new Error(err.detail || "OCR failed")
       }
 
       const data = await res.json()
 
       setGrid(data.board)
+      setGivenGrid(emptyBoolGrid)
       setSolvedGrid(null)
-      setShowOcrNotice(true)
       setInvalidCells([])
+
       validateGrid(data.board)
-      setSourceGrid(
-        data.board.map(row => row.map(v => v !== 0))
-      )
+      setShowOcrNotice(true)
 
     } catch (err) {
       console.error("OCR error", err)
       alert("Failed to read Sudoku from image")
+    } finally {
+      setIsOcrLoading(false)
     }
   }
+
 
   function handleChange(r, c, value) {
     if (isGiven(r, c)) return 
@@ -130,8 +146,9 @@ function App() {
   }
 
   function isGiven(r, c) {
-    return initialGrid[r][c] !== 0
+    return givenGrid[r][c]
   }
+
 
   return (
     <div style={{ padding: "20px" }}>
@@ -173,10 +190,12 @@ function App() {
                         color: "#000000",
                         caretColor: "#000000",
                         backgroundColor: isInvalid(r, c)
-                          ? "#fecaca"            
-                          : isGiven(r, c)
-                          ? "#e9d5ff"            
-                          : "#ffffff",           
+                          ? "#fecaca"
+                          : solvedGrid && !filledBeforeSolve[r][c]
+                          ? "#ffffff" 
+                          : grid[r][c] !== 0
+                          ? "#e9d5ff" 
+                          : "#ffffff",
                         borderTop: r % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
                         borderLeft: c % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
                         borderRight: c === 8 ? "3px solid #444" : "1px solid #aaa",
@@ -194,7 +213,7 @@ function App() {
       </table>
       <div
         style={{
-          minHeight: "40px",
+          minHeight: "50px",
           marginBottom: "10px",
           textAlign: "center",
           transition: "opacity 0.2s ease",
@@ -230,8 +249,11 @@ function App() {
         <button
           onClick={() => {
             const preset = samplePuzzle.map(row => [...row])
-            setInitialGrid(preset)
             setGrid(preset)
+            setShowOcrNotice(false)
+            setGivenGrid(
+              preset.map(row => row.map(v => v !== 0))
+            )
             setSolvedGrid(null)
             validateGrid(preset)
           }}
