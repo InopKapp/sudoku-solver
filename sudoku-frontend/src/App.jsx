@@ -23,6 +23,7 @@ function App() {
   const [solvedGrid, setSolvedGrid] = useState(null)
   const [showOcrNotice, setShowOcrNotice] = useState(false)
   const [isOcrLoading, setIsOcrLoading] = useState(false)
+  const [imagePreview, setImagePreview] = useState(null)
 
   const samplePuzzle = [
     [5,3,0,0,7,0,0,0,0],
@@ -92,6 +93,9 @@ function App() {
     setIsOcrLoading(true)
     setShowOcrNotice(false)
 
+    const previewUrl = URL.createObjectURL(file)
+    setImagePreview(previewUrl)
+
     const formData = new FormData()
     formData.append("image", file)
 
@@ -119,6 +123,7 @@ function App() {
     } catch (err) {
       console.error("OCR error", err)
       alert("Failed to read Sudoku from image")
+      setImagePreview(null)
     } finally {
       setIsOcrLoading(false)
     }
@@ -160,78 +165,121 @@ function App() {
         onChange={handleImageUpload}
       />
 
-      <table>
-        <tbody>
-          {grid.map((row, r) => (
-            <tr key={r}>
-              {row.map((cell, c) => {
-                const displayValue = solvedGrid ? solvedGrid[r][c] : grid[r][c]
-
-                return (
-                  <td key={c}>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={displayValue === 0 ? "" : displayValue}
-                      disabled={isGiven(r, c) || solvedGrid !== null}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        if (v === "" || /^[1-9]$/.test(v)) {
-                          handleChange(r, c, v === "" ? 0 : Number(v))
-                        }
-                      }}
-                      style={{
-                        width: "42px",
-                        height: "42px",
-                        textAlign: "center",
-                        fontSize: "20px",
-                        fontWeight: isGiven(r, c) ? "bold" : "normal",
-                        color: "#000000",
-                        caretColor: "#000000",
-                        backgroundColor: isInvalid(r, c)
-                          ? "#fecaca"
-                          : solvedGrid && !filledBeforeSolve[r][c]
-                          ? "#ffffff" 
-                          : grid[r][c] !== 0
-                          ? "#e9d5ff" 
-                          : "#ffffff",
-                        borderTop: r % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
-                        borderLeft: c % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
-                        borderRight: c === 8 ? "3px solid #444" : "1px solid #aaa",
-                        borderBottom: r === 8 ? "3px solid #444" : "1px solid #aaa",
-                        outline: "none",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
       <div
         style={{
-          minHeight: "50px",
-          marginBottom: "10px",
-          textAlign: "center",
-          transition: "opacity 0.2s ease",
+          display: "flex",
+          gap: "24px",
+          alignItems: "flex-start",
+          marginTop: "20px"
         }}
       >
-        {isOcrLoading && (
-          <p style={{ color: "#7c3aed", fontWeight: 500, margin: 0 }}>
-            Processing image… please wait
-          </p>
-        )}
+      
+        <div>
+          <table>
+            <tbody>
+              {grid.map((row, r) => (
+                <tr key={r}>
+                  {row.map((cell, c) => {
+                    const displayValue = solvedGrid ? solvedGrid[r][c] : grid[r][c]
 
-        {!isOcrLoading && showOcrNotice && (
-          <p style={{ margin: 0, lineHeight: "1.4" }}>
-            Verify the detected Sudoku grid.<br />
-            Correct any incorrect cells before proceeding.
-          </p>
-        )}
+                    return (
+                      <td key={c}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={displayValue === 0 ? "" : displayValue}
+                          disabled={isGiven(r, c) || solvedGrid !== null}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            if (v === "" || /^[1-9]$/.test(v)) {
+                              handleChange(r, c, v === "" ? 0 : Number(v))
+                            }
+                          }}
+                          style={{
+                            width: "42px",
+                            height: "42px",
+                            textAlign: "center",
+                            fontSize: "20px",
+                            fontWeight: isGiven(r, c) ? "bold" : "normal",
+                            color: "#000000",
+                            caretColor: "#000000",
+                            backgroundColor: isInvalid(r, c)
+                              ? "#fecaca"
+                              : solvedGrid && !filledBeforeSolve[r][c]
+                              ? "#ffffff" 
+                              : grid[r][c] !== 0
+                              ? "#e9d5ff" 
+                              : "#ffffff",
+                            borderTop: r % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
+                            borderLeft: c % 3 === 0 ? "3px solid #444" : "1px solid #aaa",
+                            borderRight: c === 8 ? "3px solid #444" : "1px solid #aaa",
+                            borderBottom: r === 8 ? "3px solid #444" : "1px solid #aaa",
+                            outline: "none",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div
+            style={{
+              minHeight: "50px",
+              marginBottom: "10px",
+              textAlign: "center",
+              transition: "opacity 0.2s ease",
+            }}
+          >
+            {isOcrLoading && (
+              <p style={{ color: "#7c3aed", fontWeight: 500, margin: 0 }}>
+                Processing image… please wait
+              </p>
+            )}
+
+            {!isOcrLoading && showOcrNotice && (
+              <p style={{ margin: 0, lineHeight: "1.4" }}>
+                Verify the detected Sudoku grid.<br />
+                Correct any incorrect cells before proceeding.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            width: "260px",
+            minHeight: "260px",
+            border: "1px solid #ddd",
+            padding: "8px",
+            background: "#fafafa",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          {imagePreview ? (
+            <img
+              src={imagePreview}
+              alt="Uploaded Sudoku"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain"
+              }}
+            />
+          ) : (
+            <span style={{ color: "#888", fontSize: "14px" }}>
+              Uploaded image preview
+            </span>
+          )}
+        </div>
       </div>
+
       <div style={{ marginTop: "20px" }}>
         <button
           onClick={solveSudoku}
@@ -251,6 +299,7 @@ function App() {
             const preset = samplePuzzle.map(row => [...row])
             setGrid(preset)
             setShowOcrNotice(false)
+            setImagePreview(null)
             setGivenGrid(
               preset.map(row => row.map(v => v !== 0))
             )
