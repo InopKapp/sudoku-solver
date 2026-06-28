@@ -22,10 +22,8 @@ Thumbs.db
 # Debug / generated outputs
 debug/
 
-# Images (inputs + OCR intermediates)
-*.png
-*.jpg
-*.jpeg
+# temp uploads from API
+temp_uploads/
 
 # Test directory
 test images/
