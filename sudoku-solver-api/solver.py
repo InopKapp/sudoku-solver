@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple, Set
 import copy
 
 N = 9
@@ -38,9 +38,11 @@ def find_invalid_cells(board):
     return [[r, c] for r, c in invalid]
 
 def is_valid(board: List[List[int]], row: int, col: int, num: int) -> bool:
+    # check row and column
     for x in range(N):
         if board[row][x] == num or board[x][col] == num:
             return False
+    # check 3x3 box
     start_row, start_col = row - row % 3, col - col % 3
     for i in range(3):
         for j in range(3):
@@ -48,18 +50,54 @@ def is_valid(board: List[List[int]], row: int, col: int, num: int) -> bool:
                 return False
     return True
 
+def get_candidates(board: List[List[int]], r: int, c: int) -> Set[int]:
+    if board[r][c] != 0:
+        return set()
+    used = set()
+    # row and col
+    for i in range(9):
+        used.add(board[r][i])
+        used.add(board[i][c])
+    # 3x3 Box
+    br, bc = r - r % 3, c - c % 3
+    for i in range(3):
+        for j in range(3):
+            used.add(board[br + i][bc + j])
+            
+    return set(range(1, 10)) - used
+
+def solve_sudoku_mrv(board: List[List[int]]) -> bool:
+    # find the empty cell with the fewest possible candidates, min remaining val (MRV)
+    min_candidates = 10
+    best_cell = None
+    best_options = None
+    
+    for r in range(N):
+        for c in range(N):
+            if board[r][c] == 0:
+                options = get_candidates(board, r, c)
+                if len(options) == 0:
+                    return False # dead end
+                if len(options) < min_candidates:
+                    min_candidates = len(options)
+                    best_cell = (r, c)
+                    best_options = options
+                    
+    # if no empty cell found, it's solved
+    if best_cell is None:
+        return True
+        
+    r, c = best_cell
+    for num in best_options:
+        board[r][c] = num
+        if solve_sudoku_mrv(board):
+            return True
+        board[r][c] = 0
+            
+    return False
+
 def solve_sudoku(board: List[List[int]]) -> bool:
-    for row in range(N):
-        for col in range(N):
-            if board[row][col] == 0:
-                for num in range(1, 10):
-                    if is_valid(board, row, col, num):
-                        board[row][col] = num
-                        if solve_sudoku(board):
-                            return True
-                        board[row][col] = 0
-                return False
-    return True
+    return solve_sudoku_mrv(board)
 
 def is_board_valid(board: List[List[int]]) -> bool:
     for i in range(N):

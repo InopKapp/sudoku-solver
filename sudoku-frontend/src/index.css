@@ -1,68 +1,275 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --bg-color: #0f172a;
+  --panel-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #0ea5e9;
+  --accent-hover: #0284c7;
+  --accent-glow: rgba(14, 165, 233, 0.4);
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.15);
+  --cell-bg: #1e293b;
+  --cell-bg-given: #334155;
+  --cell-border: #334155;
+  --cell-border-thick: #64748b;
+  --cell-text: #f8fafc;
+  --cell-text-solved: #38bdf8;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-color);
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.container {
+  padding: 2rem;
+  max-width: 1000px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--accent);
+}
+
+.main-content {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3rem;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 0 0 350px;
+  width: 350px;
+  position: sticky;
+  top: 2rem;
+}
+
+.sudoku-board {
+  border-collapse: collapse;
+  background: var(--panel-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--cell-border-thick);
+}
+
+.sudoku-cell {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.5rem;
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  color: var(--cell-text);
+  background: transparent;
+  border: 1px solid var(--cell-border);
+  outline: none;
+  transition: all 0.2s ease;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.sudoku-cell:hover:not(:disabled) {
+  background: rgba(14, 165, 233, 0.15);
+}
+
+/* thicker borders for 3x3 grids */
+.sudoku-row:nth-child(3n) .sudoku-cell {
+  border-bottom: 2px solid var(--cell-border-thick);
+}
+
+td:nth-child(3n) .sudoku-cell {
+  border-right: 2px solid var(--cell-border-thick);
+}
+
+.sudoku-row:last-child .sudoku-cell {
+  border-bottom: none;
+}
+
+td:last-child .sudoku-cell {
+  border-right: none;
+}
+
+.sudoku-cell:focus {
+  background: rgba(14, 165, 233, 0.1);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.sudoku-cell.given {
+  font-weight: 700;
+  background: var(--cell-bg-given);
+}
+
+.sudoku-cell.solved {
+  color: var(--cell-text-solved);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.sudoku-cell.invalid {
+  background: var(--error-bg);
+  color: var(--error);
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn {
+  background: var(--panel-bg);
+  color: var(--text-main);
+  border: 1px solid var(--cell-border-thick);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(14, 165, 233, 0.1);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 6px 15px var(--accent-glow);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-upload-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+.file-upload-wrapper input[type="file"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
+}
+
+.file-upload-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.file-upload-wrapper:hover .file-upload-btn {
+  border-color: var(--accent);
+  background: rgba(14, 165, 233, 0.1);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.image-preview-container {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--panel-bg);
+  border: 1px dashed var(--cell-border-thick);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.image-preview-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.status-message {
+  text-align: center;
+  min-height: 3rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.status-message.loading {
+  color: var(--accent);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
   }
-  a:hover {
-    color: #747bff;
+
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 10px var(--accent-glow);
   }
-  button {
-    background-color: #f9f9f9;
+
+  100% {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-wrap: wrap;
+  }
+
+  .right-panel {
+    position: static;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .sudoku-cell {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
   }
 }

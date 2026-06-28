@@ -26,3 +26,6 @@ debug/
 *.png
 *.jpg
 *.jpeg
+
+# Test directory
+test images/
