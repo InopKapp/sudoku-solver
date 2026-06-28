@@ -5,6 +5,14 @@ def preprocess_image(image_path: str, dbg=None):
     if img is None:
         raise ValueError("Could not read image")
 
+    # downscale image if it is too large to ensure consistent processing speed and accuracy
+    max_dimension = 1000
+    height, width = img.shape[:2]
+    if max(height, width) > max_dimension:
+        scale = max_dimension / max(height, width)
+        img = cv2.resize(img, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_AREA)
+
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (7, 7), 0)
 
